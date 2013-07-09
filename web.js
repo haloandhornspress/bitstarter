@@ -4,8 +4,8 @@ var app = express.createServer(express.logger());
 
 app.get('/', function(request, response) {
   var fs = require('fs');
-  var bin_input = fs.readFileSync("index.html");
-  var str_input = bin_input.toString)();
+  var filename = "index.html";
+  var str_input = fs.readFileSync(filename, 'utf-8');
   response.send(str_input);
 });
 
