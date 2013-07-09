@@ -27,10 +27,7 @@ var cheerio = require('cheerio');
 var sys = require('util');
 var rest = require('restler'); 
 var HTMLFILE_DEFAULT = "index.html";
-var URL_DEFAULT = "http:\\www.google.com";
 var CHECKSFILE_DEFAULT = "checks.json";
-
-var actualHtml = "";
 
 var assertFileExists = function(infile) {
     var instr = infile.toString();
@@ -49,16 +46,22 @@ var assertUrlExists = function(inUrl) {
             process.exit(1);
 	}
         else {
-	    var checkJson = checkUrlFile(result, program.checks);
-	    var outJson = JSON.stringify(checkJson, null, 4);
-	    console.log(outJson);
+            runChecks(result);
         } 
     });
     return instr;
 }
 
 var cheerioHtmlFile = function(htmlfile) {
-    return cheerio.load(fs.readFileSync(htmlfile));
+    if(program.file) {
+        return cheerio.load(fs.readFileSync(htmlfile));
+    }
+    else if(program.url) {
+        return cheerio.load(htmlfile);
+    }
+    else { 
+	return; 
+    }
 };
 
 var loadChecks = function(checksfile) {
@@ -76,16 +79,11 @@ var checkHtmlFile = function(htmlfile, checksfile) {
     return out;
 };
 
-var checkUrlFile = function(html, checksfile) {
-    $ = cheerio.load(html);
-    var checks = loadChecks(checksfile).sort();
-    var out = {};
-    for(var ii in checks) {
-        var present = $(checks[ii]).length > 0;
-        out[checks[ii]] = present;
-    }
-    return out;
-};
+var runChecks = function(input) {
+    var checkJson = checkHtmlFile(input, program.checks);
+    var outJson = JSON.stringify(checkJson, null, 4);
+    console.log(outJson);
+}
 
 var clone = function(fn) {
     // Workaround for commander.js issue.
@@ -100,13 +98,11 @@ if(require.main == module) {
         .option('-u, --url <url>', 'Url of index.html')
         .parse(process.argv);
     if(program.file) {
-        console.log("Checking file %s against %s", program.file, program.checks);
-        var checkJson = checkHtmlFile(program.file, program.checks);
-	var outJson = JSON.stringify(checkJson, null, 4);
-	console.log(outJson);
+        // console.log("Checking file %s against %s", program.file, program.checks);
+        runChecks(program.file);
     }
     else if(program.url) {
-        console.log("Checking url %s against %s", program.url, program.checks);
+        // console.log("Checking url %s against %s", program.url, program.checks);
         assertUrlExists(program.url);
     }
     else {
